@@ -3,13 +3,17 @@ package client;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.applet.*; 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class Client extends Applet implements Runnable {
+public class Client extends Panel implements Runnable {
+	
+	/**
+	 * Inital Version. 
+	 */
+	private static final long serialVersionUID = 1;
 	
 	private Button submitButton;
 	private Button clearButton;

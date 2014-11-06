@@ -2,10 +2,14 @@ package server;
 
 import java.io.*;
 import java.net.*;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 public class Server {
 	
 	private OutputStream outputStream;
+	private ServerSocket ss;
+	private Hashtable outputStreams = new Hashtable();
 
 	public static void main(String[] args) throws IOException {
 		
@@ -24,7 +28,7 @@ public class Server {
 	
 	public void listen (int port) throws IOException {
 		// Create the ServerSocket 
-		ServerSocket ss = new ServerSocket (port);
+		ss = new ServerSocket (port);
 		
 		// Print we're ready to go
 		System.out.println("Listening on ServerSocket " + ss);
@@ -45,7 +49,7 @@ public class Server {
 			DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 			
 			// Save this stream so it doesn't need to be remade
-			((Object) outputStream).put(s, dout);
+			outputStreams.put(s, dout);
 			
 			// Create a new thread for this connection, and then
 			// forget about it. This thread will deal with the
@@ -55,12 +59,47 @@ public class Server {
 		}
 	}
 	
+	// Get an enumeration of all the OutputStreams, one for each client
+	// that is connected.	
+	Enumeration getOutputStreams() {
+		return outputStreams.elements();
+	}
+	
 	public void sendToAll(String message) {
-		// TODO
+		
+		// We sync on this because another thread might be
+		// calling removeConnection as we tried to walk through the list.
+		synchronized(outputStreams) {
+			// for each client...
+			for (Enumeration e = getOutputStreams(); e.hasMoreElements();) {
+				// get the stream...
+				DataOutputStream dout = (DataOutputStream) e.nextElement();
+				// and send the message
+				try {
+					dout.writeUTF(message);
+				} catch (IOException ie) {
+					System.out.println("IOError in sendToAll in Server");
+				}
+			}
+		}
 	}
 	
 	public void removeConnection(Socket socket) {
-		// TODO
+		// Remove a socket, and its correspoinding output stream, from out list
+		// make sure it doesn't mess up sendToAll
+		synchronized(outputStreams) {
+			// Tell the world
+			System.out.println("Removing connection to " + socket);
+			// remove it from our list
+			outputStreams.remove(socket);
+			// make sure its closed
+			try {
+				socket.close();
+			} catch (IOException ie) {
+				System.out.println("Error closing " + socket);
+				ie.printStackTrace();
+			}
+		}
 	}
 
 }

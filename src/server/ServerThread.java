@@ -17,6 +17,7 @@ public class ServerThread extends Thread {
 	
 	public ServerThread(Server server, Socket sock) {
 		
+		// save params
 		this.server = server;
 		this.socket = sock;
 		
